@@ -52,32 +52,31 @@ public class RaceBugs {
     List<List<Integer>> parts = splitList(fullList, 2);
 
     ExecutorService pool = Executors.newCachedThreadPool();
-//    List<Future<Integer>> futureList = new ArrayList<>();
-//    for (List<Integer> part : parts) {
-//      Future<Integer> localTotalFuture = pool.submit(new Callable<Integer>() {
+    List<Future<Integer>> futureList = new ArrayList<>();
+    for (List<Integer> part : parts) {
+      Future<Integer> localTotalFuture = pool.submit(() -> countEven(part)); // java 8 style
+//        Future<Integer> localTotalFuture = pool.submit(new Callable<Integer>() {
 //        @Override
 //        public Integer call() throws Exception {
 //          return countEven(part);// this method is executed by a worker thread
 //        }
 //      });
-////      Future<Integer> localTotalFuture = pool.submit(() -> countEven(part)); // java 8 style
-//
-//      futureList.add(localTotalFuture);
-//    }
-
-    Future<Integer> firstHalfResultsFuture = pool.submit(() -> countEven(parts.get(0)));
-    Future<Integer> secondHalfResultsFuture = pool.submit(() -> countEven(parts.get(1)));
-    // 2 threads are now counting my even numbers
+    futureList.add(localTotalFuture);
+  }
     int total = 0;
-    total += firstHalfResultsFuture.get(); // blocks the main thread until the results of the first half are ready
-    total += secondHalfResultsFuture.get();
+
+//    Future<Integer> firstHalfResultsFuture = pool.submit(() -> countEven(parts.get(0)));
+//    Future<Integer> secondHalfResultsFuture = pool.submit(() -> countEven(parts.get(1)));
+//    // 2 threads are now counting my even numbers
+//    total += firstHalfResultsFuture.get(); // blocks the main thread until the results of the first half are ready
+//    total += secondHalfResultsFuture.get();
 
     pool.shutdown();
     pool.awaitTermination(1, MINUTES);
 
-//    for (Future<Integer> future : futureList) {
-//      total += future.get();
-//    }
+    for (Future<Integer> future : futureList) {
+      total += future.get();// blocks the main thread until the results of the first half are ready
+    }
     log.debug("Counted: " + total);
     log.debug("List.size: " + evenNumbers.size());
   }
