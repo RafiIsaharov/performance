@@ -26,7 +26,13 @@ public class RaceBugs {
     log.info("Start");
     for (Integer n : numbers) {
       if (n % 2 == 0) {
-        total++;
+        synchronized (total) {
+//          total++;
+         // total = total +1;
+          total = new Integer(total+1 );// imutable object that recreating itseld and the reference is
+        }
+//        System.out.println("in"); // or a log.debug they latency (spend time) outside of the risky line
+        // race conditions = heisenbugs (Heisenberg's Uncertainty Principle)
       }
     }
     log.info("End");
