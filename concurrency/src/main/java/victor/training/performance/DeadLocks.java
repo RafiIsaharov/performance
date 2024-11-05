@@ -1,12 +1,8 @@
 package victor.training.performance;
 
-import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import victor.training.performance.util.PerformanceUtil;
-
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static victor.training.performance.util.PerformanceUtil.log;
 
@@ -15,7 +11,6 @@ public class DeadLocks {
    @Value
    static class Fork {
       int id;
-      ReentrantLock lock = new ReentrantLock();
    }
 
    static class Philosopher extends Thread {
@@ -28,47 +23,23 @@ public class DeadLocks {
          this.rightFork = rightFork;
       }
 
-      @SneakyThrows
       public void run() {
          Fork firstFork = leftFork;
          Fork secondFork = rightFork;
 
-//            synchronized (firstFork) { // 'synchronized' word is bad since java 21 (~ Virtual Threads don't like it)
          for (int i = 0; i < 5000; i++) {
             log("I'm hungry");
+
             log("Taking fork #" + firstFork.id + "...");
-            firstFork.lock.lock();
-            try{
+            synchronized (firstFork) {
                log("Took one fork");
                log("Taking fork #" + secondFork.id + "...");
-               var tookIt = secondFork.lock.tryLock(1, TimeUnit.MICROSECONDS);
-               try{
-                  if(tookIt) {
-                     log("Eating🌟...");
-                     log("Done eating. Releasing forks");
-                  }
+               synchronized (secondFork) {
+                  log("Eating🌟...");
+                  // sleepNanos(10);
+                  log("Done eating. Releasing forks");
                }
-               finally {
-                  secondFork.lock.unlock();
-               }
-            }finally {
-                firstFork.lock.unlock();
             }
-
-//            for (int i = 0; i < 5000; i++) {
-//               log("I'm hungry");
-//
-//               log("Taking fork #" + firstFork.id + "...");
-//               synchronized (firstFork) {
-//                  log("Took one fork");
-//                  log("Taking fork #" + secondFork.id + "...");
-//                  synchronized (secondFork) {
-//                     log("Eating🌟...");
-//                     // sleepNanos(10);
-//                     log("Done eating. Releasing forks");
-//                  }
-//               }
-
             log("Thinking...");
          }
          log("NORMAL FINISH (no deadlock happened)");
