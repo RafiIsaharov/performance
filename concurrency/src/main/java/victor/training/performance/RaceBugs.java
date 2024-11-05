@@ -30,6 +30,7 @@ public class RaceBugs {
     for (Integer n : numbers) {
       if (n % 2 == 0) {
         localTotal++;
+        evenNumbers.add(n);
 //        total.incrementAndGet();
 //        total = new Integer(total+1 );
 //        System.out.println("in"); // or a log.debug they latency (spend time) outside of the risky line
