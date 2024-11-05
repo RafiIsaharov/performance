@@ -27,7 +27,7 @@ public class RaceBugs {
     log.info("Start");
     for (Integer n : numbers) {
       if (n % 2 == 0) {
-        synchronized (lock) {
+        synchronized (RaceBugs.class) {
 //          total++;
          // total = total +1;
           total = new Integer(total+1 );// imutable object that recreating itseld and the reference is
