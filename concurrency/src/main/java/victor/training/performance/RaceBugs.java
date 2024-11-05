@@ -17,7 +17,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 @Slf4j
 public class RaceBugs {
   private static final Object lock = new Object();
-  private static List<Integer> evenNumbers = new ArrayList<>();// mutable and doesn't lose increments
+  private static final List<Integer> evenNumbers = new ArrayList<>();// mutable and doesn't lose increments
 
   //  private static Integer total = 0;
   // to assign sequential request Ids, PKs...
@@ -30,7 +30,9 @@ public class RaceBugs {
     for (Integer n : numbers) {
       if (n % 2 == 0) {
         localTotal++;
-        evenNumbers.add(n);
+        synchronized (evenNumbers) {
+          evenNumbers.add(n);
+        }
 //        total.incrementAndGet();
 //        total = new Integer(total+1 );
 //        System.out.println("in"); // or a log.debug they latency (spend time) outside of the risky line
