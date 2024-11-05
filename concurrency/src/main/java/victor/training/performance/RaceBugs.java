@@ -23,15 +23,11 @@ public class RaceBugs {
   private static final Object lock = new Object();
 
   // many parallel threads run this method:
-  private static void countEven(List<Integer> numbers) {
+  private synchronized static void countEven(List<Integer> numbers) {
     log.info("Start");
     for (Integer n : numbers) {
       if (n % 2 == 0) {
-        synchronized (RaceBugs.class) {
-//          total++;
-         // total = total +1;
-          total = new Integer(total+1 );// imutable object that recreating itseld and the reference is
-        }
+        total = new Integer(total+1 );
 //        System.out.println("in"); // or a log.debug they latency (spend time) outside of the risky line
         // race conditions = heisenbugs (Heisenberg's Uncertainty Principle)
       }
