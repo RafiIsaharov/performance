@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -17,17 +18,20 @@ import static java.util.stream.Collectors.toList;
 @SuppressWarnings("ALL")
 @Slf4j
 public class RaceBugs {
-  private static List<Integer> evenNumbers = new ArrayList<>();
-
-  private static Integer total = 0;
   private static final Object lock = new Object();
+  private static List<Integer> evenNumbers = new ArrayList<>();// mutable and doesn't lose increments
+
+  //  private static Integer total = 0;
+  // to assign sequential request Ids, PKs...
+  private static AtomicInteger total = new AtomicInteger(0);
 
   // many parallel threads run this method:
-  private synchronized static void countEven(List<Integer> numbers) {
+  private static void countEven(List<Integer> numbers) {
     log.info("Start");
     for (Integer n : numbers) {
       if (n % 2 == 0) {
-        total = new Integer(total+1 );
+        total.incrementAndGet();
+//        total = new Integer(total+1 );
 //        System.out.println("in"); // or a log.debug they latency (spend time) outside of the risky line
         // race conditions = heisenbugs (Heisenberg's Uncertainty Principle)
       }
