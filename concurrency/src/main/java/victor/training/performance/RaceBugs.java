@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
+import static java.util.Collections.synchronizedList;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 
@@ -18,7 +19,8 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 public class RaceBugs {
   private static final Object lock = new Object();
   private static final List<Integer> evenNumbers =
-          Collections.synchronizedList(new ArrayList<>());// mutable and doesn't lose increments
+          synchronizedList(new ArrayList<>());// mutable and doesn't lose increments
+  //decorated the new ArrayList by wraping it with Collections.synchronizedList
 
   //  private static Integer total = 0;
   // to assign sequential request Ids, PKs...
