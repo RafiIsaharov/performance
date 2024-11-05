@@ -5,14 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.stream.Collectors.toList;
 
 
 @SuppressWarnings("ALL")
@@ -23,34 +21,58 @@ public class RaceBugs {
 
   //  private static Integer total = 0;
   // to assign sequential request Ids, PKs...
-  private static AtomicInteger total = new AtomicInteger(0);
+//  private static AtomicInteger total = new AtomicInteger(0);
 
   // many parallel threads run this method:
-  private static void countEven(List<Integer> numbers) {
+  private static int countEven(List<Integer> numbers) {
+    int localTotal = 0;
     log.info("Start");
     for (Integer n : numbers) {
       if (n % 2 == 0) {
-        total.incrementAndGet();
+        localTotal++;
+//        total.incrementAndGet();
 //        total = new Integer(total+1 );
 //        System.out.println("in"); // or a log.debug they latency (spend time) outside of the risky line
         // race conditions = heisenbugs (Heisenberg's Uncertainty Principle)
       }
     }
     log.info("End");
+    return localTotal;
   }
 
   public static void main(String[] args) throws Exception {
-    List<Integer> fullList = IntStream.range(0, 1_0000).boxed().toList();
-  // [[500elements],[500elements]]
+    List<Integer> fullList = IntStream.range(0, 10000).boxed().toList();
+
+    // [[500elems],[500elems]]
     List<List<Integer>> parts = splitList(fullList, 2);
 
     ExecutorService pool = Executors.newCachedThreadPool();
-    for (List<Integer> part : parts) {
-      pool.submit(()-> countEven(part));
-    }
+//    List<Future<Integer>> futureList = new ArrayList<>();
+//    for (List<Integer> part : parts) {
+//      Future<Integer> localTotalFuture = pool.submit(new Callable<Integer>() {
+//        @Override
+//        public Integer call() throws Exception {
+//          return countEven(part);// this method is executed by a worker thread
+//        }
+//      });
+////      Future<Integer> localTotalFuture = pool.submit(() -> countEven(part)); // java 8 style
+//
+//      futureList.add(localTotalFuture);
+//    }
+
+    Future<Integer> firstHalfResultsFuture = pool.submit(() -> countEven(parts.get(0)));
+    Future<Integer> secondHalfResultsFuture = pool.submit(() -> countEven(parts.get(1)));
+    // 2 threads are now counting my even numbers
+    int total = 0;
+    total += firstHalfResultsFuture.get(); // blocks the main thread until the results of the first half are ready
+    total += secondHalfResultsFuture.get();
+
     pool.shutdown();
     pool.awaitTermination(1, MINUTES);
 
+//    for (Future<Integer> future : futureList) {
+//      total += future.get();
+//    }
     log.debug("Counted: " + total);
     log.debug("List.size: " + evenNumbers.size());
   }
