@@ -32,15 +32,24 @@ public class Barman {
 //    Vodka vodka = rest.getForObject("http://localhost:9999/vodka", Vodka.class);//1s
 //    DillyDilly dilly = new DillyDilly(beer, vodka);
 
-//    Future<Beer> beerFuture = CompletableFuture.supplyAsync(() -> rest.getForObject("http://localhost:9999/beer", Beer.class));
-//    Future<Vodka> vodkaFuture = CompletableFuture.supplyAsync(() -> rest.getForObject("http://localhost:9999/vodka", Vodka.class));
-//    DillyDilly dilly = new DillyDilly(beerFuture.get(), vodkaFuture.get());
-    DillyDilly dilly = CompletableFuture.supplyAsync(() -> rest.getForObject("http://localhost:9999/beer", Beer.class))
-            .thenCombineAsync(CompletableFuture.supplyAsync(() -> rest.getForObject("http://localhost:9999/vodka", Vodka.class)),
-                    DillyDilly::new)
-            .join();
+    // Its run on ForkJoinPool.commonPool() which has 200 threads by default N(CPU)-1
+    //Network execute network calls in the internal  JVM thread pool ForkJoinPool.commonPool()
+    // reasons: 1. to avoid thread starvation 2. to avoid creating a new thread for each request 3. thread metadata is expensive
+    Future<Beer> beerFuture = CompletableFuture.supplyAsync(this::fetchBeer);
+    Future<Vodka> vodkaFuture = CompletableFuture.supplyAsync(() -> rest.getForObject("http://localhost:9999/vodka", Vodka.class));
+    DillyDilly dilly = new DillyDilly(beerFuture.get(), vodkaFuture.get());
+
+//    DillyDilly dilly = CompletableFuture.supplyAsync(() -> rest.getForObject("http://localhost:9999/beer", Beer.class))
+//            .thenCombineAsync(CompletableFuture.supplyAsync(() -> rest.getForObject("http://localhost:9999/vodka", Vodka.class)),
+//                    DillyDilly::new)
+//            .join();
 
     log.info("HTTP thread blocked for {} durationMillis", currentTimeMillis() - t0);
     return dilly;
+  }
+
+  private Beer fetchBeer() {
+    log.info("fetchBeer Where am I running? {}", Thread.currentThread().getName());
+    return rest.getForObject("http://localhost:9999/beer", Beer.class);
   }
 }
