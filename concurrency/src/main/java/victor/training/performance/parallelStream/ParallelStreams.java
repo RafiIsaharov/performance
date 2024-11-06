@@ -11,7 +11,13 @@ import static victor.training.performance.util.PerformanceUtil.sleepMillis;
 @Slf4j
 public class ParallelStreams {
   public static void main(String[] args) throws ExecutionException, InterruptedException {
-    // OnAServer.otherParallelRequestsAreRunning(); // starve the shared commonPool din JVM
+     OnAServer.otherParallelRequestsAreRunning(); // starve the shared commonPool din JVM
+      //starvation is no fair here all treads are sleeping for the same amount of time
+//      And if I look at the CPU load 0%
+      // Resource starvation: = Unbalanced usage of resources "Unfairness"
+      //Other Tasks waiting in a queue for a long time to get CPU time because of other Task waiting for Network blocking a
+//      share pooled resource (DB connection, REST - HTTP Connection, CPU - Thread)
+      // back to 5000 milliseconds, because this OnAServer.otherParallelRequestsAreRunning();  task much more CPU intensive than the other tasks
 
     List<Integer> list = IntStream.range(1, 100).boxed().toList();
 
@@ -22,11 +28,7 @@ public class ParallelStreams {
 //      and I paralyse my flow to take 10 threads(10 CPUs) to work on.
 //      So instead of having 5000 milliseconds, I expect to see
 //      all be doing thread sleep for 500 milliseconds.
-      //starvation is no fair here all treads are sleeping for the same amount of time
-//      And if I look at the CPU load 0%
-      // Resource starvation: = Unbalanced usage of resources "Unfairness"
-      //Other Tasks waiting in a queue for a long time to get CPU time because of other Task waiting for Network blocking a
-//      share pooled resource (DB connection, REST - HTTP Connection, CPU - Thread)
+
       var result = list.parallelStream()
               .filter(i -> i % 2 == 0) //50% of the elements are filtered out
         .map(i -> {
